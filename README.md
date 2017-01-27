@@ -117,4 +117,4 @@ The same as when you create a general card. Just replace **null** in the last pa
 ## Useful links
 * [Pipefy Official API Documentation](https://pipefy.gitbooks.io/pipefy-api-docs/index.html)
 
-* [MIT License](../blob/master/LICENSE)
+* [MIT License](../master/LICENSE)
