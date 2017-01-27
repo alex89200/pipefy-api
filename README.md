@@ -112,3 +112,9 @@ $card = $pipe->create_card("Card title", $fields, 5555);
 
 #### Directly
 The same as when you create a general card. Just replace **null** in the last parameter of the "create_card" function with the parent card id.
+
+
+## Useful links
+* [Pipefy Official API Documentation](https://pipefy.gitbooks.io/pipefy-api-docs/index.html)
+
+* [MIT License](../blob/master/LICENSE)
