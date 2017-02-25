@@ -30,9 +30,10 @@ class Card extends APIObject {
     public $next_phase;  //Phase
     public $assignees; // [User],
     public $labels; // [Label],
-    public $current_phase_detail; // {},
+    public $current_phase_detail; // PhaseDetail,
     public $other_phase_details; // [],
-    public $checklists; // []
+    public $parent_card_phase_detail; // CardPhaseDetail
+    public $checklists; // [Checklist]
 
     private $endpoint = "https://app.pipefy.com/";
 
@@ -64,6 +65,10 @@ class Card extends APIObject {
         $this->parse_property("next_phase", "Phase");
         $this->parse_property("assignees", "User");
         $this->parse_property("labels", "Label");
+        $this->parse_property("current_phase_detail", "PhaseDetail");
+        $this->parse_property("other_phase_details", "PhaseDetail");
+        $this->parse_property("parent_card_phase_detail", "CardPhaseDetail");
+        $this->parse_property("checklists", "Checklist");
 
         return $this;
     }
@@ -90,6 +95,10 @@ class Card extends APIObject {
             $this->parse_property("next_phase", "Phase");
             $this->parse_property("assignees", "User");
             $this->parse_property("labels", "Label");
+            $this->parse_property("current_phase_detail", "PhaseDetail");
+            $this->parse_property("other_phase_details", "PhaseDetail");
+            $this->parse_property("parent_card_phase_detail", "CardPhaseDetail");
+            $this->parse_property("checklists", "Checklist");
 
             return $this;
         }
@@ -132,6 +141,13 @@ class Card extends APIObject {
     }
 
 
+    public function jump_to_phase($phase_id) {
+        $this->send_put($this->endpoint . "cards/".$this->id."/jump_to_phase/".$phase_id.".json", array("application/x-www-form-urlencoded"), array());
+
+        return $this->fetch();
+    }
+
+
     /**
      * @return $this
      */
@@ -152,5 +168,53 @@ class Card extends APIObject {
         $this->assign_results($resp);
 
         return $this;
+    }
+
+
+    public function update_field_persist($fieldID, $newValue) {
+        $fieldData = array(
+            "card_id" => $this->id,
+            "field_id" => $fieldID,
+            "new_value" => $newValue
+        );
+
+        $this->send_post($this->endpoint . "card_field_values/persist.json", null, http_build_query($fieldData));
+
+        return $this;
+    }
+
+
+    public function update_field($fieldID, $newValue) {
+        $fieldData = array(
+            "card_phase_detail_id" => $this->current_phase_detail->id,
+            "field_id" => $fieldID,
+            "new_value" => $newValue
+        );
+
+        $this->send_post($this->endpoint . "card_field_values.json", null, http_build_query($fieldData));
+
+        return $this;
+    }
+
+
+    public function leave_comment($text) {
+        $comment = array();
+        $comment["comment"]["text"] = $text;
+        $comment["comment"]["card_phase_detail_id"] = $this->current_phase_detail->id;
+
+
+        $resp = $this->send_post($this->endpoint . "comments.json", null, http_build_query($comment));
+
+        return json_decode($resp);
+    }
+
+
+    public function create_checklist($checklist_name, $items, $no_layout = true) {
+        $checklist = (new Checklist())->create_checklist($checklist_name, $this->current_phase_detail->id, $no_layout);
+        foreach ($items as $item_name) {
+            $checklist->add_option($item_name, $no_layout);
+        }
+
+        return $checklist;
     }
 }

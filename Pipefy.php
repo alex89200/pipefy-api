@@ -6,6 +6,7 @@
  * Time: 11:59
  */
 
+include_once "Organization.php";
 include_once "Pipe.php";
 include_once "Phase.php";
 include_once "Card.php";
@@ -14,6 +15,9 @@ include_once "Field.php";
 include_once "FieldValue.php";
 include_once "Label.php";
 include_once "Comment.php";
+include_once "PhaseDetail.php";
+include_once "CardPhaseDetail.php";
+include_once "Checklist.php";
 
 
 class Pipefy {

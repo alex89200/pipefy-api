@@ -82,4 +82,98 @@ class Phase extends APIObject {
 
         return false;
     }
+
+
+
+    public function move_card($from_index, $dest_index, $before) {
+        $cards_count = count($this->cards);
+
+        if ($from_index < 0 || $from_index >= $cards_count || $dest_index < 0 || $dest_index >= $cards_count)
+            return false;
+
+        $card_to_move = $this->cards[$from_index];
+
+        $putData = array();
+        if ($before) {
+
+            if ($dest_index != 0) {
+                $putData["previous_id"] = $this->cards[$dest_index - 1]->id;
+            }
+
+            $putData["next_id"] = $this->cards[$dest_index]->id;
+        }
+        else {
+
+            if ($dest_index != $cards_count - 1) {
+                $putData["next_id"] = $this->cards[$dest_index + 1]->id;
+            }
+
+            $putData["previous_id"] = $this->cards[$dest_index]->id;
+        }
+
+        $this->send_put(sprintf("https://app.pipefy.com/cards/%d/move", $card_to_move->id), null, $putData);
+
+        //move card in array
+        $new_cards = array();
+
+        for ($i = 0; $i < $cards_count; $i++) {
+            if ($i == $dest_index) {
+                $new_cards[] = $card_to_move;
+            }
+            else {
+                if ($i != $from_index)
+                    $new_cards[] = $this->cards[$i];
+            }
+        }
+
+        $this->cards = $new_cards;
+
+        return $this;
+    }
+
+
+    public function move_card_by_id($card_id, $prev_card_id, $next_card_id, $fetch_updated = true) {
+        $putData = array();
+
+        if ($prev_card_id != null)
+            $putData["previous_id"] = $prev_card_id;
+
+        if ($next_card_id != null)
+            $putData["next_id"] = $next_card_id;
+
+        $this->send_put(sprintf("https://app.pipefy.com/cards/%d/move", $card_id), null, $putData);
+
+
+        if ($fetch_updated)
+            return $this->fetch();
+        else
+            return $this;
+    }
+
+
+    public function sort_cards_by_due_date() {
+        foreach ($this->cards as $card) {
+            $card->fetch();
+        }
+
+        usort($this->cards, function ($a, $b) {
+            $ta = strtotime($a->due_date);
+            $tb = strtotime($b->due_date);
+
+            if ($ta == $tb) {
+                return 0;
+            }
+
+            return ($ta < $tb) ? -1 : 1;
+        });
+
+
+        for ($i = 1; $i < count($this->cards); $i++) {
+            $card_id = $this->cards[$i]->id;
+            $prev_card_id = $this->cards[$i - 1]->id;
+            $this->move_card_by_id($card_id, $prev_card_id, null, false);
+        }
+
+        return $this->fetch();
+    }
 }
